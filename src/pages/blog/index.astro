@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+---
+
+<BaseLayout title="博客文章">
+  <div class="flex gap-12">
+
+    <!-- 左侧：标题 + 分割线 -->
+    <div class="flex items-start gap-8 shrink-0 pt-4">
+      <!-- 标题文字（垂直排列） -->
+      <div class="flex flex-col items-center gap-2 pt-6">
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">博</span>
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">客</span>
+        <span class="text-xs text-coffee/50 tracking-[0.3em] uppercase font-medium mt-2">Blog</span>
+      </div>
+
+      <!-- 垂直分割线 -->
+      <div class="relative w-0.5 h-64 bg-divide mt-8">
+        <div class="absolute -top-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+        <div class="absolute -bottom-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：博客列表 -->
+    <div class="flex-1 pt-4">
+
+      <!-- 简介 -->
+      <div class="mb-12 pb-8 border-b border-coffee/10">
+        <p class="text-coffee/60 font-serif text-lg leading-relaxed max-w-2xl">
+          技术博客文章，记录学习心得与项目经验。
+        </p>
+      </div>
+
+      <!-- 博客列表 -->
+      <div class="space-y-12">
+        {posts.map((post, index) => (
+          <a
+            href={`/blog/${post.slug}`}
+            class="flex items-start gap-8 group"
+          >
+            <!-- 编号卡片 -->
+            <div class="shrink-0 select-none">
+              <div class="flex h-20 shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
+                <!-- 彩色条带 -->
+                <div class="w-2 h-full bg-sage"></div>
+                <div class="w-2 h-full bg-mustard"></div>
+                <div class="w-1.5 h-full bg-dark-strip"></div>
+                <!-- 数字方块 -->
+                <div class="w-20 h-full flex items-center justify-center bg-coffee">
+                  <span class="text-3xl font-black tracking-widest text-orange font-mono">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 内容 -->
+            <div class="pt-2 flex-1">
+              <h2 class="text-xl font-serif font-semibold text-coffee mb-2 group-hover:text-orange transition-colors duration-300">
+                {post.data.title}
+              </h2>
+              {post.data.description && (
+                <p class="text-coffee/60 mb-3 font-serif leading-relaxed">
+                  {post.data.description}
+                </p>
+              )}
+              <p class="text-xs font-mono text-coffee/40">{post.data.repo}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+
+      {posts.length === 0 && (
+        <div class="flex items-start gap-8 pl-28">
+          <p class="text-coffee/40 italic font-serif">暂无博客文章</p>
+        </div>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

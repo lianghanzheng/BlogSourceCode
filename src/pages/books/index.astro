@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const books = await getCollection('books');
+
+// Group chapters by book slug
+const booksBySlug = books.reduce((acc, chapter) => {
+  const bookSlug = chapter.slug.split('/')[0];
+  if (!acc[bookSlug]) {
+    acc[bookSlug] = {
+      title: chapter.data.bookTitle,
+      chapters: [],
+    };
+  }
+  acc[bookSlug].chapters.push({
+    title: chapter.data.title,
+    description: chapter.data.description,
+    order: chapter.data.bookOrder,
+    slug: chapter.slug
+  });
+  return acc;
+}, {} as Record<string, { title: string; chapters: any[] }>);
+
+const bookList = Object.values(booksBySlug);
+---
+
+<BaseLayout title="书籍">
+  <div class="flex gap-12">
+
+    <!-- 左侧：标题 + 分割线 -->
+    <div class="flex items-start gap-8 shrink-0 pt-4">
+      <!-- 标题文字（垂直排列） -->
+      <div class="flex flex-col items-center gap-2 pt-6">
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">书</span>
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">籍</span>
+        <span class="text-xs text-coffee/50 tracking-[0.3em] uppercase font-medium mt-2">Books</span>
+      </div>
+
+      <!-- 垂直分割线 -->
+      <div class="relative w-0.5 h-64 bg-divide mt-8">
+        <div class="absolute -top-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+        <div class="absolute -bottom-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：书籍列表 -->
+    <div class="flex-1 pt-4">
+
+      <!-- 简介 -->
+      <div class="mb-12 pb-8 border-b border-coffee/10">
+        <p class="text-coffee/60 font-serif text-lg leading-relaxed max-w-2xl">
+          正在撰写的技术书籍和教程。
+        </p>
+      </div>
+
+      <!-- 书籍列表 -->
+      <div class="space-y-16">
+        {bookList.map((book, bookIndex) => (
+          <div class="flex items-start gap-8">
+            <!-- 编号卡片 -->
+            <div class="shrink-0 select-none">
+              <div class="flex h-20 shadow-lg">
+                <!-- 彩色条带 -->
+                <div class="w-2 h-full bg-sage"></div>
+                <div class="w-2 h-full bg-mustard"></div>
+                <div class="w-1.5 h-full bg-dark-strip"></div>
+                <!-- 数字方块 -->
+                <div class="w-20 h-full flex items-center justify-center bg-coffee">
+                  <span class="text-3xl font-black tracking-widest text-orange font-mono">
+                    {String(bookIndex + 1).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 内容 -->
+            <div class="flex-1 pt-2">
+              <h2 class="text-2xl font-serif font-semibold text-coffee mb-6">{book.title}</h2>
+
+              <div class="space-y-4">
+                {book.chapters.sort((a, b) => a.order - b.order).map((chapter, index) => (
+                  <a
+                    href={`/books/${chapter.slug}`}
+                    class="flex items-start gap-4 group p-4 -mx-4 rounded-lg hover:bg-coffee/5 transition-colors duration-300"
+                  >
+                    <span class="text-orange font-mono text-sm font-medium w-6 shrink-0 pt-0.5">{index + 1}.</span>
+                    <div>
+                      <h3 class="font-serif font-medium text-coffee group-hover:text-orange transition-colors duration-300">
+                        {chapter.title}
+                      </h3>
+                      {chapter.description && (
+                        <p class="text-sm text-coffee/50 mt-1 font-serif">{chapter.description}</p>
+                      )}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {bookList.length === 0 && (
+        <div class="flex items-start gap-8 pl-28">
+          <p class="text-coffee/40 italic font-serif">暂无书籍</p>
+        </div>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

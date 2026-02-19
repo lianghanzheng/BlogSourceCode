@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const books = await getCollection('books');
+  return books.map((chapter) => ({
+    params: { slug: chapter.slug },
+    props: { chapter },
+  }));
+}
+
+const { chapter } = Astro.props;
+const { Content, headings } = await render(chapter);
+
+// Get all chapters in the same book for navigation
+const allChapters = await getCollection('books');
+const bookSlug = chapter.slug.split('/')[0];
+const sameBookChapters = allChapters
+  .filter((c) => c.slug.startsWith(bookSlug + '/'))
+  .sort((a, b) => a.data.bookOrder - b.data.bookOrder);
+
+const currentIndex = sameBookChapters.findIndex((c) => c.slug === chapter.slug);
+const prevChapter = currentIndex > 0 ? sameBookChapters[currentIndex - 1] : null;
+const nextChapter = currentIndex < sameBookChapters.length - 1 ? sameBookChapters[currentIndex + 1] : null;
+---
+
+<BaseLayout title={chapter.data.title}>
+  <div class="flex gap-12">
+
+    <!-- 左侧：目录导航 + 分割线 -->
+    <div class="flex items-start gap-8 shrink-0 pt-4">
+      <!-- TOC 区域 -->
+      <div class="w-28 flex flex-col items-center pt-6">
+        <!-- 标题导航 -->
+        <TableOfContents headings={headings} />
+      </div>
+
+      <!-- 垂直分割线 -->
+      <div class="relative w-0.5 h-64 bg-divide mt-8">
+        <div class="absolute -top-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+        <div class="absolute -bottom-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：文章内容 -->
+    <div class="flex-1 pt-4">
+      <article>
+        <header class="mb-12 pb-8 border-b border-coffee/10">
+          <!-- 书籍标题 -->
+          <div class="mb-4">
+            <span class="text-sm text-coffee/60 font-serif">{chapter.data.bookTitle}</span>
+          </div>
+
+          <!-- 三色条带编号卡片 + 标题 -->
+          <div class="flex items-start gap-6">
+            <!-- 编号卡片 -->
+            <div class="shrink-0 select-none">
+              <div class="flex h-20 shadow-lg">
+                <!-- 彩色条带 -->
+                <div class="w-2 h-full bg-sage"></div>
+                <div class="w-2 h-full bg-mustard"></div>
+                <div class="w-1.5 h-full bg-dark-strip"></div>
+                <!-- 数字方块 -->
+                <div class="w-20 h-full flex items-center justify-center bg-coffee">
+                  <span class="text-3xl font-black tracking-widest text-orange font-mono">
+                    {String(currentIndex + 1).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 标题信息 -->
+            <div class="pt-2">
+              <h1 class="text-3xl font-serif font-bold text-coffee mb-2">{chapter.data.title}</h1>
+              {chapter.data.description && (
+                <p class="text-coffee/70 font-serif text-lg">{chapter.data.description}</p>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <!-- 章节内容 -->
+        <div class="prose prose-stone prose-lg max-w-none prose-headings:font-serif prose-headings:text-coffee prose-p:text-coffee/80 prose-a:text-orange prose-a:no-underline hover:prose-a:underline prose-code:text-orange prose-code:bg-coffee/5 prose-code:px-1 prose-code:rounded prose-pre:bg-coffee prose-pre:text-cream">
+          <Content />
+        </div>
+
+        <!-- 章节导航 -->
+        <nav class="mt-16 pt-8 border-t border-coffee/10 flex justify-between">
+          {prevChapter ? (
+            <a href={`/books/${prevChapter.slug}`} class="text-orange hover:underline flex items-center gap-2">
+              <span>←</span>
+              <span class="text-coffee font-serif">{prevChapter.data.title}</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+          {nextChapter ? (
+            <a href={`/books/${nextChapter.slug}`} class="text-orange hover:underline flex items-center gap-2">
+              <span class="text-coffee font-serif">{nextChapter.data.title}</span>
+              <span>→</span>
+            </a>
+          ) : (
+            <span></span>
+          )}
+        </nav>
+      </article>
+    </div>
+  </div>
+</BaseLayout>

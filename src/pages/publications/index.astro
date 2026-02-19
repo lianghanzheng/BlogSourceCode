@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const publications = await getCollection('publications');
+const sortedPublications = publications.sort((a, b) => b.data.year - a.data.year);
+---
+
+<BaseLayout title="论文发表">
+  <div class="flex gap-12">
+
+    <!-- 左侧：标题 + 分割线 -->
+    <div class="flex items-start gap-8 shrink-0 pt-4">
+      <!-- 标题文字（垂直排列） -->
+      <div class="flex flex-col items-center gap-2 pt-6">
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">论</span>
+        <span class="text-6xl font-serif font-bold text-coffee tracking-wider">文</span>
+        <span class="text-xs text-coffee/50 tracking-[0.3em] uppercase font-medium mt-2">Papers</span>
+      </div>
+
+      <!-- 垂直分割线 -->
+      <div class="relative w-0.5 h-64 bg-divide mt-8">
+        <div class="absolute -top-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+        <div class="absolute -bottom-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：论文列表 -->
+    <div class="flex-1 pt-4">
+
+      <!-- 简介 -->
+      <div class="mb-12 pb-8 border-b border-coffee/10">
+        <p class="text-coffee/60 font-serif text-lg leading-relaxed max-w-2xl">
+          以下是我的学术论文发表记录。研究兴趣主要集中在编译器优化、程序分析和编程语言理论。
+        </p>
+      </div>
+
+      <!-- 论文列表 -->
+      <div class="space-y-12">
+        {sortedPublications.map((pub, index) => (
+          <div class="flex items-start gap-8 group">
+            <!-- 编号卡片 -->
+            <div class="shrink-0 select-none">
+              <div class="flex h-20 shadow-lg transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
+                <!-- 彩色条带 -->
+                <div class="w-2 h-full bg-sage"></div>
+                <div class="w-2 h-full bg-mustard"></div>
+                <div class="w-1.5 h-full bg-dark-strip"></div>
+                <!-- 数字方块 -->
+                <div class="w-20 h-full flex items-center justify-center bg-coffee">
+                  <span class="text-3xl font-black tracking-widest text-orange font-mono">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 内容 -->
+            <div class="pt-2 flex-1">
+              <h2 class="text-xl font-serif font-semibold text-coffee mb-2 group-hover:text-orange transition-colors duration-300">
+                {pub.data.title}
+              </h2>
+              <p class="text-sm text-coffee/60 mb-3 font-serif">{pub.data.authors.join(', ')}</p>
+              <div class="flex items-center gap-3 mb-4">
+                <span class="inline-block px-3 py-1 text-xs font-mono bg-coffee/5 text-coffee/70 rounded-full border border-coffee/10">
+                  {pub.data.venue}
+                </span>
+                <span class="text-xs font-mono text-orange font-medium">{pub.data.year}</span>
+              </div>
+
+              {pub.data.link && (
+                <a
+                  href={pub.data.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 text-sm text-coffee/50 hover:text-orange transition-colors duration-300"
+                >
+                  <span class="font-serif italic">查看论文</span>
+                  <span class="text-xs">→</span>
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {sortedPublications.length === 0 && (
+        <div class="flex items-start gap-8 pl-28">
+          <p class="text-coffee/40 italic font-serif">暂无发表论文</p>
+        </div>
+      )}
+
+    </div>
+  </div>
+</BaseLayout>

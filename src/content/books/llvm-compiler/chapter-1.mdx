@@ -1,0 +1,31 @@
+---
+title: "第一章：构建LLVM驱动"
+description: "如何构建一个典型的LLVM驱动"
+bookTitle: "LLVM编译器实践"
+bookOrder: 1
+repo: "lianghanzheng/TinyCCompiler"
+chapters:
+  - commit: "67c375e24ea2b70ef93a6d52649df1448b3368d1"
+    label: "朴素的驱动实现"
+  - commit: "7458028da73d2879fe946ebc7ec7e3730e6a3a2c"
+    label: "相对正式的实现"
+---
+
+import AutoCodeDiff from '../../../components/AutoCodeDiff.astro';
+
+## 构建LLVM驱动
+
+下面展示从第一个版本到第二个版本的变化：
+
+<AutoCodeDiff
+  repo={frontmatter.repo}
+  old={frontmatter.chapters[0].commit}
+  new={frontmatter.chapters[1].commit}
+  files={["main.cc"]}
+/>
+
+代码说明：第二个版本进行了重构，增加了：
+- 独立的 `InitializeModule()` 函数
+- 辅助函数 `CreateFunction`、`CreateBinaryOp`、`CreateCall`、`CreateRet`
+- 添加了优化 pass 管理器
+- 实现了简单的 1+2 计算作为演示

@@ -1,0 +1,123 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+
+// 只显示 h2 和 h3 标题
+const tocHeadings = headings.filter((h) => h.depth <= 3);
+---
+
+{
+  tocHeadings.length > 0 && (
+    <nav class="toc-nav w-full mt-4" aria-label="目录导航">
+      <ul class="flex flex-col gap-2 text-sm">
+        {tocHeadings.map((heading) => (
+          <li
+            class:list={[
+              'toc-item transition-colors duration-200',
+              heading.depth === 3 && 'pl-3',
+            ]}
+          >
+            <a
+              href={`#${heading.slug}`}
+              class="toc-link block py-1 text-coffee/60 hover:text-orange transition-colors duration-200 font-serif leading-tight"
+              data-heading-id={heading.slug}
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script>
+  // 客户端脚本：高亮当前阅读的章节
+  document.addEventListener('DOMContentLoaded', () => {
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const headings = document.querySelectorAll('h2[id], h3[id]');
+
+    if (tocLinks.length === 0 || headings.length === 0) return;
+
+    // 创建 IntersectionObserver 监听标题可见性
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -80% 0px',
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // 移除所有高亮
+          tocLinks.forEach((link) => {
+            link.classList.remove('text-coffee', 'font-medium');
+            link.classList.add('text-coffee/60');
+          });
+
+          // 高亮当前章节
+          const activeLink = document.querySelector(
+            `.toc-link[data-heading-id="${entry.target.id}"]`
+          );
+          if (activeLink) {
+            activeLink.classList.remove('text-coffee/60');
+            activeLink.classList.add('text-coffee', 'font-medium');
+          }
+        }
+      });
+    }, observerOptions);
+
+    headings.forEach((heading) => observer.observe(heading));
+
+    // 平滑滚动
+    tocLinks.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const href = link.getAttribute('href');
+        if (!href) return;
+
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+
+          // 更新 URL hash
+          history.pushState(null, '', href);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .toc-nav {
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(70, 51, 37, 0.2) transparent;
+  }
+
+  .toc-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .toc-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .toc-nav::-webkit-scrollbar-thumb {
+    background-color: rgba(70, 51, 37, 0.2);
+    border-radius: 2px;
+  }
+</style>

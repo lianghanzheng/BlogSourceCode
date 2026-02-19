@@ -1,0 +1,272 @@
+---
+import { Buffer } from 'node:buffer';
+
+interface FileMapping {
+  old?: string;
+  new: string;
+}
+
+interface Props {
+  repo: string;
+  old: string;
+  new: string;
+  files: (string | FileMapping)[];
+}
+
+const { repo, old: oldCommit, new: newCommit, files } = Astro.props;
+
+// Normalize files to FileMapping format
+const normalizedFiles = files.map(f => {
+  if (typeof f === 'string') {
+    return { old: f, new: f };
+  }
+  return { old: f.old, new: f.new };
+});
+
+// GitHub API endpoint
+const apiBase = `https://api.github.com/repos/${repo}`;
+
+// Fetch file content from GitHub
+async function fetchFileContent(path: string, ref: string): Promise<{ content: string; sha: string } | null> {
+  try {
+    const response = await fetch(`${apiBase}/contents/${path}?ref=${ref}`);
+    if (!response.ok) {
+      console.error(`Failed to fetch ${path}: ${response.status} ${response.statusText}`);
+      return null;
+    }
+    const data = await response.json();
+    if (!data.content) return null;
+    // GitHub returns content base64 encoded
+    const content = Buffer.from(data.content, 'base64').toString('utf-8');
+    return { content, sha: data.sha };
+  } catch (e) {
+    console.error(`Failed to fetch ${path}:`, e);
+    return null;
+  }
+}
+
+// Determine file status based on content changes
+function getFileStatus(oldContent: string, newContent: string): 'added' | 'deleted' | 'modified' | 'renamed' {
+  if (!oldContent && newContent) return 'added';
+  if (oldContent && !newContent) return 'deleted';
+  if (oldContent !== newContent) return 'modified';
+  return 'modified';
+}
+
+// Process all files
+const fileDiffs = await Promise.all(
+  normalizedFiles.map(async (file) => {
+    try {
+      // Fetch old version content (if old filename is specified)
+      let oldData = null;
+      if (file.old) {
+        oldData = await fetchFileContent(file.old, oldCommit);
+      }
+
+      // Fetch new version content
+      const newData = await fetchFileContent(file.new, newCommit);
+
+      const oldContent = oldData?.content || '';
+      const newContent = newData?.content || '';
+
+      // Determine status
+      let status: 'added' | 'deleted' | 'modified' | 'renamed' = 'modified';
+      if (!oldContent && newContent) {
+        status = 'added';
+      } else if (oldContent && !newContent) {
+        status = 'deleted';
+      } else if (file.old && file.new && file.old !== file.new) {
+        status = 'renamed';
+      }
+
+      return {
+        oldFilename: file.old || file.new,
+        newFilename: file.new,
+        oldContent,
+        newContent,
+        status,
+      };
+    } catch (e) {
+      console.error(`Failed to fetch diff for ${file.new}:`, e);
+      return null;
+    }
+  })
+);
+
+const validFiles = fileDiffs.filter((f): f is NonNullable<typeof f> => f !== null);
+
+// Build comparison URL
+const githubUrl = `https://github.com/${repo}/compare/${oldCommit}...${newCommit}`;
+
+// Calculate summary
+const totalAdditions = validFiles.reduce((sum, f) => {
+  const oldLines = f.oldContent.split('\n');
+  const newLines = f.newContent.split('\n');
+  return sum + newLines.filter((line, i) => line !== oldLines[i]).length;
+}, 0);
+
+const totalDeletions = validFiles.reduce((sum, f) => {
+  const oldLines = f.oldContent.split('\n');
+  const newLines = f.newContent.split('\n');
+  return sum + oldLines.filter((line, i) => line !== newLines[i]).length;
+}, 0);
+---
+
+{validFiles.length > 0 ? (
+  <div class="diff-viewer my-6 border rounded-lg overflow-hidden">
+    {/* Diff Summary */}
+    <div class="diff-summary flex items-center gap-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm">
+      <span class="text-gray-600 dark:text-gray-400">
+        {validFiles.length} file{validFiles.length !== 1 ? 's' : ''}
+      </span>
+      <span class="text-green-600">+{totalAdditions}</span>
+      <span class="text-red-600">-{totalDeletions}</span>
+      <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="ml-auto text-blue-600 hover:underline">
+        查看对比 →
+      </a>
+    </div>
+
+    {/* Files */}
+    <div class="diff-files">
+      {validFiles.map((file) => (
+        <div class="diff-file">
+          {/* File Header */}
+          <div class="file-header flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-t"
+               onclick="this.closest('.diff-file').classList.toggle('expanded')">
+            <span class={`file-status font-mono text-sm ${
+              file.status === 'added' ? 'text-green-600' :
+              file.status === 'deleted' ? 'text-red-600' :
+              file.status === 'renamed' ? 'text-blue-600' : 'text-yellow-600'
+            }`}>
+              {file.status === 'added' ? '+' :
+               file.status === 'deleted' ? '-' :
+               file.status === 'renamed' ? 'R' : 'M'}
+            </span>
+            <span class="file-path text-sm font-mono text-gray-700 dark:text-gray-300">
+              {file.oldFilename !== file.newFilename ? (
+                <>{file.oldFilename} → {file.newFilename}</>
+              ) : (
+                <>{file.newFilename}</>
+              )}
+            </span>
+            <span class="ml-auto expand-icon text-gray-400">▶</span>
+          </div>
+
+          {/* Split View Content */}
+          <div class="file-diff-content hidden">
+            <div class="split-view flex border-t">
+              {/* Old Version Pane */}
+              <div class="split-pane old flex-1 border-r">
+                <div class="pane-header px-3 py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 border-b">
+                  {file.oldFilename}
+                </div>
+                <div class="pane-content">
+                  {file.oldContent ? (
+                    file.oldContent.split('\n').map((line, i) => {
+                      const newLines = file.newContent.split('\n');
+                      const isDeleted = i < file.oldContent.split('\n').length && line !== (newLines[i] || '');
+                      return (
+                        <div class={`split-line ${isDeleted ? 'deleted' : ''}`}>
+                          <span class="line-number text-right pr-2 text-gray-400 select-none w-10 inline-block">{i + 1}</span>
+                          <span class="line-text whitespace-pre">{line}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div class="split-line empty text-gray-300 text-center py-2 text-sm">
+                      (空文件)
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* New Version Pane */}
+              <div class="split-pane new flex-1">
+                <div class="pane-header px-3 py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 border-b">
+                  {file.newFilename}
+                </div>
+                <div class="pane-content">
+                  {file.newContent ? (
+                    file.newContent.split('\n').map((line, i) => {
+                      const oldLines = file.oldContent.split('\n');
+                      const isAdded = i < file.newContent.split('\n').length && line !== (oldLines[i] || '');
+                      return (
+                        <div class={`split-line ${isAdded ? 'added' : ''}`}>
+                          <span class="line-number text-right pr-2 text-gray-400 select-none w-10 inline-block">{i + 1}</span>
+                          <span class="line-text whitespace-pre">{line}</span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div class="split-line empty text-gray-300 text-center py-2 text-sm">
+                      (空文件)
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+) : (
+  <div class="p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600">
+    无法获取代码差异，请检查仓库地址和文件路径是否正确
+  </div>
+)}
+
+<style is:global>
+  .diff-file.expanded .file-diff-content {
+    display: block;
+  }
+
+  .diff-file.expanded .expand-icon {
+    transform: rotate(90deg);
+  }
+
+  .expand-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 10px;
+  }
+
+  .split-line {
+    display: flex;
+    min-height: 22px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  .split-line.deleted {
+    background: rgba(248, 81, 73, 0.2);
+  }
+
+  .split-line.added {
+    background: rgba(46, 160, 67, 0.2);
+  }
+
+  .line-number {
+    min-width: 40px;
+    user-select: none;
+  }
+
+  .line-text {
+    flex: 1;
+    overflow-x: auto;
+  }
+
+  .split-pane {
+    overflow-x: auto;
+    max-width: 50%;
+  }
+
+  .split-pane.old {
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .dark .split-pane.old {
+    border-right-color: #374151;
+  }
+</style>

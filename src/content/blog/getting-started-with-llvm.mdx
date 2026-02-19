@@ -1,0 +1,35 @@
+---
+title: "LLVM 入门指南"
+description: "初学者指南：了解 LLVM 编译器框架的基本概念"
+repo: "lianghanzheng/TinyCCompiler"
+chapters:
+  - commit: "67c375e24ea2b70ef93a6d52649df1448b3368d1"
+    label: "初始版本"
+  - commit: "7458028da73d2879fe946ebc7ec7e3730e6a3a2c"
+    label: "完善版本"
+---
+
+import AutoCodeDiff from '../../components/AutoCodeDiff.astro';
+
+## 什么是 LLVM？
+
+LLVM 是一个模块化的编译器工具链框架，被广泛应用于各种编程语言的编译器开发。
+
+## 代码示例
+
+下面展示一个简单的 C 编译器驱动实现：
+
+<AutoCodeDiff
+  repo={frontmatter.repo}
+  old={frontmatter.chapters[0].commit}
+  new={frontmatter.chapters[1].commit}
+  files={["main.cc"]}
+/>
+
+## 总结
+
+这个示例展示了 LLVM 的基本用法，包括：
+- 模块初始化
+- 函数创建
+- 基本块构建
+- 返回指令生成

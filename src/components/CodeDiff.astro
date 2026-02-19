@@ -1,0 +1,104 @@
+---
+interface Props {
+  repo: string;
+  commit: string;
+  files: Array<{
+    filename: string;
+    oldFilename?: string;
+    newContent: string;
+    oldContent: string;
+  }>;
+}
+
+const { repo, commit, files } = Astro.props;
+
+const githubUrl = `https://github.com/${repo}/commit/${commit}`;
+---
+
+<div class="code-diff-container my-6 border rounded-lg overflow-hidden">
+  <div class="code-diff-header flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-800 cursor-pointer" onclick="this.closest('.code-diff-container').classList.toggle('expanded')">
+    <div class="flex items-center gap-2">
+      <span class="expand-icon text-gray-500">▶</span>
+      <span class="font-medium text-sm">代码示例 ({files.length} 个文件)</span>
+    </div>
+    <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600 hover:underline" onclick="event.stopPropagation()">
+      查看 commit →
+    </a>
+  </div>
+
+  <div class="code-diff-content hidden">
+    {files.map((file, index) => (
+      <div class="diff-file border-t first:border-t-0">
+        <div class="diff-filename px-4 py-1 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 font-mono">
+          {file.oldFilename ? `${file.oldFilename} → ${file.filename}` : file.filename}
+        </div>
+        <div class="diff-view overflow-x-auto">
+          <table class="w-full text-sm font-mono">
+            <tbody>
+              {file.newContent.split('\n').map((line, lineIndex) => {
+                const oldLines = file.oldContent.split('\n');
+                const oldLine = oldLines[lineIndex] || '';
+                const isChanged = line !== oldLine;
+                return (
+                  <tr class={isChanged ? 'bg-yellow-50 dark:bg-yellow-900/20' : ''}>
+                    <td class="w-10 px-2 text-right text-gray-400 select-none border-r bg-gray-50 dark:bg-gray-900" valign="top">{lineIndex + 1}</td>
+                    <td class="w-10 px-2 text-right text-gray-400 select-none border-r bg-gray-50 dark:bg-gray-900" valign="top">{file.oldFilename ? (lineIndex + 1) : ''}</td>
+                    <td class="px-2 whitespace-pre">{line}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .code-diff-container.expanded .code-diff-content {
+    display: block;
+  }
+
+  .code-diff-container.expanded .expand-icon {
+    transform: rotate(90deg);
+  }
+
+  .diff-view table {
+    border-collapse: collapse;
+  }
+
+  .diff-view td {
+    padding: 0 8px;
+    line-height: 1.5;
+  }
+</style>
+
+<script>
+  // Add CSS for line-by-line diff highlighting
+  const style = document.createElement('style');
+  style.textContent = `
+    .code-diff-container {
+      transition: all 0.2s ease;
+    }
+
+    .code-diff-header:hover {
+      background-color: rgb(229 231 235);
+    }
+
+    .dark .code-diff-header:hover {
+      background-color: rgb(31 41 55);
+    }
+
+    .expand-icon {
+      display: inline-block;
+      transition: transform 0.2s ease;
+      font-size: 10px;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+  `;
+  document.head.appendChild(style);
+</script>

@@ -1,0 +1,104 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+  </head>
+  <body class="bg-cream text-coffee min-h-screen antialiased paper-texture">
+    <header class="border-b border-coffee/10">
+      <nav class="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between">
+        <a href="/" class="text-lg font-medium tracking-wide text-coffee hover:text-orange transition-colors">
+          <span class="font-serif italic">My</span> <span class="font-semibold">Publications</span>
+        </a>
+        <div class="flex gap-8 text-sm">
+          <a href="/" class="text-coffee/70 hover:text-orange transition-colors">首页</a>
+          <a href="/blog" class="text-coffee/70 hover:text-orange transition-colors">博客</a>
+          <a href="/books" class="text-coffee/70 hover:text-orange transition-colors">书籍</a>
+          <a href="/paper-reviews" class="text-coffee/70 hover:text-orange transition-colors">分享</a>
+          <a href="/publications" class="text-coffee/70 hover:text-orange transition-colors">论文</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+      <slot />
+    </main>
+
+    <footer class="border-t border-coffee/10 mt-24">
+      <div class="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center">
+        <p class="text-sm text-coffee/40">
+          © 2024 <span class="font-serif">Academic Portfolio</span>
+        </p>
+        <div class="flex gap-4">
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="text-coffee/40 hover:text-orange transition-colors text-sm">
+            GitHub
+          </a>
+          <a href="mailto:contact@example.com" class="text-coffee/40 hover:text-orange transition-colors text-sm">
+            Email
+          </a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --color-bg: #F6F1DE;
+    --color-text: #463325;
+    --color-accent: #E58E35;
+  }
+
+  .font-serif {
+    font-family: 'Crimson Pro', Georgia, serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Paper texture overlay */
+  .paper-texture {
+    position: relative;
+  }
+
+  .paper-texture::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    z-index: 9999;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection color */
+  ::selection {
+    background-color: #E58E35;
+    color: #F5F2EB;
+  }
+</style>

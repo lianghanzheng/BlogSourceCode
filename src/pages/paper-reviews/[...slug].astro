@@ -1,0 +1,90 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const paperReviews = await getCollection('paper-reviews');
+  const sortedReviews = paperReviews.sort((a, b) => b.data.year - a.data.year);
+  return sortedReviews.map((review, index) => ({
+    params: { slug: review.slug },
+    props: { review, index },
+  }));
+}
+
+const { review, index } = Astro.props;
+const { Content, headings } = await render(review);
+---
+
+<BaseLayout title={review.data.title}>
+  <div class="flex gap-12">
+
+    <!-- 左侧：目录导航 + 分割线 -->
+    <div class="flex items-start gap-8 shrink-0 pt-4">
+      <!-- TOC 区域 -->
+      <div class="w-28 flex flex-col items-center pt-6">
+        <!-- 标题导航 -->
+        <TableOfContents headings={headings} />
+      </div>
+
+      <!-- 垂直分割线 -->
+      <div class="relative w-0.5 h-64 bg-divide mt-8">
+        <div class="absolute -top-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+        <div class="absolute -bottom-1 -left-1.5 w-3.5 h-3.5 bg-divide rounded-sm"></div>
+      </div>
+    </div>
+
+    <!-- 右侧：文章内容 -->
+    <div class="flex-1 pt-4">
+      <article>
+        <header class="mb-12 pb-8 border-b border-coffee/10">
+          <!-- 三色条带编号卡片 + 标题 -->
+          <div class="flex items-start gap-6">
+            <!-- 编号卡片 -->
+            <div class="shrink-0 select-none">
+              <div class="flex h-20 shadow-lg">
+                <!-- 彩色条带 -->
+                <div class="w-2 h-full bg-sage"></div>
+                <div class="w-2 h-full bg-mustard"></div>
+                <div class="w-1.5 h-full bg-dark-strip"></div>
+                <!-- 数字方块 -->
+                <div class="w-20 h-full flex items-center justify-center bg-coffee">
+                  <span class="text-3xl font-black tracking-widest text-orange font-mono">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 标题信息 -->
+            <div class="pt-2">
+              <h1 class="text-3xl font-serif font-bold text-coffee mb-2">{review.data.title}</h1>
+              <p class="text-coffee/70 font-serif text-lg">{review.data.authors.join(', ')}</p>
+              <div class="flex items-center gap-3 mt-3">
+                <span class="inline-block px-3 py-1 text-xs font-mono bg-coffee/5 text-coffee/70 rounded-full border border-coffee/10">
+                  {review.data.venue}
+                </span>
+                <span class="text-xs font-mono text-orange font-medium">{review.data.year}</span>
+              </div>
+              {review.data.link && (
+                <a
+                  href={review.data.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 text-sm text-orange hover:underline mt-3"
+                >
+                  <span>原文链接</span>
+                  <span>→</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <div class="prose prose-stone prose-lg max-w-none prose-headings:font-serif prose-headings:text-coffee prose-p:text-coffee/80 prose-a:text-orange prose-a:no-underline hover:prose-a:underline prose-code:text-orange prose-code:bg-coffee/5 prose-code:px-1 prose-code:rounded prose-pre:bg-coffee prose-pre:text-cream">
+          <Content />
+        </div>
+      </article>
+    </div>
+  </div>
+</BaseLayout>

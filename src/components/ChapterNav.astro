@@ -1,0 +1,47 @@
+---
+interface Chapter {
+  commit: string;
+  label: string;
+}
+
+interface Props {
+  repo: string;
+  chapters: Chapter[];
+  currentCommit?: string;
+}
+
+const { repo, chapters, currentCommit } = Astro.props;
+---
+
+<div class="chapter-nav my-8 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+  <h3 class="text-lg font-semibold mb-3">章节导航</h3>
+
+  <div class="flex flex-wrap gap-2">
+    {chapters.map((chapter) => (
+      <a
+        href={`https://github.com/${repo}/commit/${chapter.commit}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        class:list={[
+          "px-3 py-1.5 rounded text-sm transition-colors",
+          currentCommit === chapter.commit
+            ? "bg-blue-600 text-white"
+            : "bg-white dark:bg-gray-700 border hover:bg-gray-100 dark:hover:bg-gray-600"
+        ]}
+      >
+        {chapter.label}
+      </a>
+    ))}
+  </div>
+
+  <div class="mt-4 pt-4 border-t text-sm text-gray-600 dark:text-gray-400">
+    <a
+      href={`https://github.com/${repo}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-blue-600 hover:underline"
+    >
+      查看完整仓库 →
+    </a>
+  </div>
+</div>
