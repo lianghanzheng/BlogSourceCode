@@ -1,0 +1,151 @@
+---
+title: "调优见闻"
+description: "简单了解一些CPU Profiler"
+---
+
+# 主要调研到的工具
+
+* strace
+* perf
+* gperf
+* bcc + bpftrace + bpftool
+
+# strace
+
+基本使用方法：
+
+```sh
+strace -c ./prog
+```
+
+TODO: 暂时没有发现该工具不可或缺的场景
+
+# ltrace
+
+TODO: 暂时没有发现该工具不可或缺的场景
+
+# perf
+
+一般来说perf的功能足够强大，能够满足很多性能分析场景。
+
+## perf stat
+
+`perf stat` 能够统计一些性能指标，通过附加不同选项来统计不同指标：
+
+* `-d` 输出常见的指标
+* `-e` 能够指定时间，可用的时间通过 `perf list` 打印
+
+## 为什么perf没有满足我的需求
+
+在一次实践中，我需要在服务器上采集性能数据。
+系统中预装了 `perf` 命令，这很好；但是使用 `perf list` 打印可用性能事件时，我发现预装的 `perf` 仅提供了少量的事件。
+然而，我在服务器上没有管理员权限，因此无法安装新的 `perf` 工具。
+不得不含泪放弃了 `perf` 工具，寻求其他方案。
+
+# gperftool
+
+Gperftool是Google的开源的性能分析工具，可以用于分析C/C++程序的性能。
+这里有一个小坑是，有一个叫做GNU perf的工具简写也是gperf，它不是gperftool，而是另一个工具。
+
+## 安装
+
+gperftool需要额外搭配[pprof](https://github.com/google/pprof)来使用，这个工具用来展示gperftool的测试结果。
+
+从git上拉下来仓库之后，首先需要换源，然后使用1.16版本以上的go编译器来编译pprof
+
+```sh
+go env -w GOPROXY=https://goproxy.cn
+
+# Install pprof in ~/go/bin/pprof
+go install
+```
+
+## 使用
+
+### 自动插桩
+
+```sh
+LD_PRELOAD=/usr/local/lib/libprofiler.so CPUPROFILE=test.prof ./path/to/bin
+```
+
+主要的环境变量：
+
+* `LD_PRELOAD`：先于 `main` 函数预加载 `libprofiler.so`；这个环境变量和 `__attribute__((constructor))` 经常一起出现用于劫持一些函数 
+* `CPUPROFILE`：profile结果
+* `CPUPROFILE_REALTIME=1`：基于真实运行时间采样，使用SIGALRM而不是SIGPROF
+* `CPUPROFILE_FREQUENCY`：每秒采样次数
+
+### 手动插桩
+
+```cpp
+#include "gperftools/profiler.h"
+
+
+ProfilerStart("gperfout.out");
+// ...
+ProfilerStop();
+```
+
+编译时加上选项 `-L/gperftool/install/path/lib  -lprofiler`。
+
+在命令行上一般以text格式读取结果，在其它情况下，还可以生成pdf等带调用关系的的图示
+
+```sh
+pprof --text ./prog prof.out
+#     --pdf
+```
+
+输出中的每一列分别对应：
+1. Number of profiling samples in this function
+2. Percentage of profiling samples in this function
+3. Percentage of profiling samples in the functions printed so far
+4. Number of profiling samples in this function and its callees
+5. Percentage of profiling samples in this function and its callees
+6. Function name
+
+# bpftool
+
+最新最潮的性能分析工具，基于eBPF技术，可以用于实时性能监控和分析。
+
+## 安装
+
+### 依赖项
+
+* [llvm]()
+	- `LLVM_TARGETS_TO_BUILD` 中需要添加BPF
+	- 需要启用LLDB
+* [libbcc](https://github.com/iovisor/bcc)
+* [cereal](https://github.com/USCiLab/cereal)
+* [libbpf](https://github.com/libbpf/libbpf)
+* [gtest](https://github.com/google/googletest)
+* [gmock]
+
+### 构建命令
+
+
+```sh
+# build bcc
+cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/opt/bcc -DENABLE_LLVM_SHARED=1
+
+# build cereal
+cmake -B build -S . -G Ninja -DCMAKE_INSTALL_PREFIX=/opt/cereal
+
+# build libbpf
+cd src
+mkdir build
+OBJDIR=build DESTDIR=/opt/libbpf make install
+
+#build google test
+cmake -B build -S . -G Ninja -DCMAKE_INSTALL_PREFIX=/opt/gtest
+
+# build bpftrace (v0.23.5)
+cmake -B build -S . -G Ninja -DCMAKE_INSTALL_PREFIX=/opt/bpftrace -DLIBBCC_INCLUDE_DIRS=/opt/bcc/include \
+-DLIBCEREAL_INCLUDE_DIRS=/opt/cereal/include -DLIBBPF_LIBRARIES=/opt/libbpf/usr/lib64 \
+-DLIBBPF_INCLUDE_DIRS=/opt/libbpf/usr/include -DGTEST_LIBRARY=/opt/gtest/lib \
+-DGTEST_INCLUDE_DIR=/opt/gtest/include -DGTEST_MAIN_LIBRARY=/opt/gtest/lib \
+-DGMOCK_LIBRARY=/opt/gtest/lib -DGMOCK_INCLUDE_DIR=/opt/gtest/include \
+-DGMOCK_MAIN_LIBRARY=/opt/gtest/lib
+```
+
+TODO: 不过这个流程目前翻车了，bpf工具依赖系统头文件 `linux/bpf.h`，但是该文件似乎缺少了一些内容。
+不会又是服务器的锅吧。

@@ -33,7 +33,7 @@ const blog = defineCollection({
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
-    repo: z.string(),
+    repo: z.string().optional(),
     chapters: z.array(
       z.object({
         commit: z.string(),
