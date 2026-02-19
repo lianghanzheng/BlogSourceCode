@@ -113,15 +113,15 @@ const totalDeletions = validFiles.reduce((sum, f) => {
 ---
 
 {validFiles.length > 0 ? (
-  <div class="diff-viewer my-6 border rounded-lg overflow-hidden">
+  <div class="diff-viewer my-6 border border-coffee/20 rounded-lg overflow-hidden shadow-sm">
     {/* Diff Summary */}
-    <div class="diff-summary flex items-center gap-4 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm">
-      <span class="text-gray-600 dark:text-gray-400">
+    <div class="diff-summary flex items-center gap-4 px-4 py-2 bg-light-beige text-sm">
+      <span class="text-coffee/70">
         {validFiles.length} file{validFiles.length !== 1 ? 's' : ''}
       </span>
-      <span class="text-green-600">+{totalAdditions}</span>
-      <span class="text-red-600">-{totalDeletions}</span>
-      <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="ml-auto text-blue-600 hover:underline">
+      <span class="text-sage font-medium">+{totalAdditions}</span>
+      <span class="text-dark-strip font-medium">-{totalDeletions}</span>
+      <a href={githubUrl} target="_blank" rel="noopener noreferrer" class="ml-auto text-orange hover:underline">
         查看对比 →
       </a>
     </div>
@@ -131,33 +131,33 @@ const totalDeletions = validFiles.reduce((sum, f) => {
       {validFiles.map((file) => (
         <div class="diff-file">
           {/* File Header */}
-          <div class="file-header flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-900 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 border-t"
+          <div class="file-header flex items-center gap-2 px-4 py-2 bg-cream cursor-pointer hover:bg-light-beige border-t border-coffee/10"
                onclick="this.closest('.diff-file').classList.toggle('expanded')">
             <span class={`file-status font-mono text-sm ${
-              file.status === 'added' ? 'text-green-600' :
-              file.status === 'deleted' ? 'text-red-600' :
-              file.status === 'renamed' ? 'text-blue-600' : 'text-yellow-600'
+              file.status === 'added' ? 'text-sage' :
+              file.status === 'deleted' ? 'text-dark-strip' :
+              file.status === 'renamed' ? 'text-amber' : 'text-mustard'
             }`}>
               {file.status === 'added' ? '+' :
                file.status === 'deleted' ? '-' :
                file.status === 'renamed' ? 'R' : 'M'}
             </span>
-            <span class="file-path text-sm font-mono text-gray-700 dark:text-gray-300">
+            <span class="file-path text-sm font-mono text-coffee/80">
               {file.oldFilename !== file.newFilename ? (
                 <>{file.oldFilename} → {file.newFilename}</>
               ) : (
                 <>{file.newFilename}</>
               )}
             </span>
-            <span class="ml-auto expand-icon text-gray-400">▶</span>
+            <span class="ml-auto expand-icon text-coffee/40">▶</span>
           </div>
 
           {/* Split View Content */}
           <div class="file-diff-content hidden">
-            <div class="split-view flex border-t">
+            <div class="split-view flex border-t border-coffee/10">
               {/* Old Version Pane */}
-              <div class="split-pane old flex-1 border-r">
-                <div class="pane-header px-3 py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 border-b">
+              <div class="split-pane old flex-1 border-r border-coffee/10">
+                <div class="pane-header px-3 py-1 bg-light-beige text-xs text-coffee/50 border-b border-coffee/10">
                   {file.oldFilename}
                 </div>
                 <div class="pane-content">
@@ -167,13 +167,13 @@ const totalDeletions = validFiles.reduce((sum, f) => {
                       const isDeleted = i < file.oldContent.split('\n').length && line !== (newLines[i] || '');
                       return (
                         <div class={`split-line ${isDeleted ? 'deleted' : ''}`}>
-                          <span class="line-number text-right pr-2 text-gray-400 select-none w-10 inline-block">{i + 1}</span>
+                          <span class="line-number text-right pr-2 text-coffee/30 select-none w-10 inline-block">{i + 1}</span>
                           <span class="line-text whitespace-pre">{line}</span>
                         </div>
                       );
                     })
                   ) : (
-                    <div class="split-line empty text-gray-300 text-center py-2 text-sm">
+                    <div class="split-line empty text-coffee/20 text-center py-2 text-sm">
                       (空文件)
                     </div>
                   )}
@@ -182,7 +182,7 @@ const totalDeletions = validFiles.reduce((sum, f) => {
 
               {/* New Version Pane */}
               <div class="split-pane new flex-1">
-                <div class="pane-header px-3 py-1 bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 border-b">
+                <div class="pane-header px-3 py-1 bg-light-beige text-xs text-coffee/50 border-b border-coffee/10">
                   {file.newFilename}
                 </div>
                 <div class="pane-content">
@@ -192,13 +192,13 @@ const totalDeletions = validFiles.reduce((sum, f) => {
                       const isAdded = i < file.newContent.split('\n').length && line !== (oldLines[i] || '');
                       return (
                         <div class={`split-line ${isAdded ? 'added' : ''}`}>
-                          <span class="line-number text-right pr-2 text-gray-400 select-none w-10 inline-block">{i + 1}</span>
+                          <span class="line-number text-right pr-2 text-coffee/30 select-none w-10 inline-block">{i + 1}</span>
                           <span class="line-text whitespace-pre">{line}</span>
                         </div>
                       );
                     })
                   ) : (
-                    <div class="split-line empty text-gray-300 text-center py-2 text-sm">
+                    <div class="split-line empty text-coffee/20 text-center py-2 text-sm">
                       (空文件)
                     </div>
                   )}
@@ -211,7 +211,7 @@ const totalDeletions = validFiles.reduce((sum, f) => {
     </div>
   </div>
 ) : (
-  <div class="p-4 border border-red-300 bg-red-50 dark:bg-red-900/20 rounded-lg text-red-600">
+  <div class="p-4 border border-dark-strip/30 bg-dark-strip/5 rounded-lg text-dark-strip">
     无法获取代码差异，请检查仓库地址和文件路径是否正确
   </div>
 )}
@@ -234,17 +234,17 @@ const totalDeletions = validFiles.reduce((sum, f) => {
   .split-line {
     display: flex;
     min-height: 22px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-family: 'Courier Prime', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 13px;
     line-height: 22px;
   }
 
   .split-line.deleted {
-    background: rgba(248, 81, 73, 0.2);
+    background: rgba(117, 42, 24, 0.12);
   }
 
   .split-line.added {
-    background: rgba(46, 160, 67, 0.2);
+    background: rgba(169, 198, 184, 0.25);
   }
 
   .line-number {
@@ -263,10 +263,6 @@ const totalDeletions = validFiles.reduce((sum, f) => {
   }
 
   .split-pane.old {
-    border-right: 1px solid #e5e7eb;
-  }
-
-  .dark .split-pane.old {
-    border-right-color: #374151;
+    border-right: 1px solid #E5E0D5;
   }
 </style>

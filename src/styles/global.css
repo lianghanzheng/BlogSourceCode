@@ -15,7 +15,7 @@
   --color-dark-strip: #752A18;
 
   /* 字体 */
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-mono: 'Courier Prime', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: 'Crimson Pro', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 }
 
@@ -25,7 +25,7 @@
 }
 
 .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Courier Prime', 'IBM Plex Mono', monospace;
 }
 
 /* 纸张纹理 */
@@ -55,4 +55,62 @@ html {
 ::selection {
   background-color: #E58E35;
   color: #F6F1DE;
+}
+
+/* Expressive Code 自定义样式 */
+.expressive-code {
+  margin: 1.5rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(70, 51, 37, 0.1), 0 2px 4px -1px rgba(70, 51, 37, 0.06);
+}
+
+.expressive-code .frame {
+  background: #2D2420 !important;
+}
+
+.expressive-code pre {
+  background: #2D2420 !important;
+  font-family: 'Courier Prime', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.expressive-code code {
+  font-family: 'Courier Prime', 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+}
+
+/* 代码块标题栏 */
+.expressive-code .frame-header {
+  background: #463325 !important;
+  border-bottom: 1px solid rgba(246, 241, 222, 0.1) !important;
+}
+
+.expressive-code .frame-title {
+  color: #F6F1DE !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 0.8rem !important;
+}
+
+/* 行号样式 */
+.expressive-code .line-numbers {
+  color: #8B7D6B !important;
+  background: transparent !important;
+}
+
+/* 高亮行 */
+.expressive-code .highlighted-line {
+  background: rgba(229, 142, 53, 0.15) !important;
+  border-left: 2px solid #E58E35 !important;
+}
+
+/* 复制按钮 */
+.expressive-code .copy-button {
+  background: rgba(246, 241, 222, 0.1) !important;
+  color: #F6F1DE !important;
+  border-radius: 0.25rem !important;
+}
+
+.expressive-code .copy-button:hover {
+  background: rgba(229, 142, 53, 0.3) !important;
 }
